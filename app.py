@@ -1,46 +1,28 @@
-from flask import Flask, render_template, request
+import streamlit as st
 import numpy as np
 import joblib
-
-app = Flask(__name__)
 
 # Load model and scaler
 model = joblib.load("student_model.pkl")
 scaler = joblib.load("scaler.pkl")
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+st.title("🎓 Student Performance Prediction")
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    # Get form values
-    features = [float(x) for x in request.form.values()]
+st.write("Enter student details:")
+
+# Input fields
+study_hours = st.number_input("Study Hours")
+absences = st.number_input("Absences")
+previous_grade = st.number_input("Previous Grade")
+
+if st.button("Predict"):
     
-    # Scale input
-    final_features = scaler.transform([features])
+    features = np.array([[study_hours, absences, previous_grade]])
     
-    # Predict
-    prediction = model.predict(final_features)
+    scaled_features = scaler.transform(features)
+    prediction = model.predict(scaled_features)
 
     if prediction[0] == 1:
-        result = "Pass"
+        st.success("Result: Pass 🎉")
     else:
-        result = "Fail"
-
-    return render_template("index.html", prediction_text="Result: " + result)
-
-if __name__ == "__main__":
-    app.run(debug=True)
-
-
-
-import os
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-model_path = os.path.join(BASE_DIR, "student_model.pkl")
-scaler_path = os.path.join(BASE_DIR, "scaler.pkl")
-
-model = joblib.load(model_path)
-scaler = joblib.load(scaler_path)
+        st.error("Result: Fail ❌")
